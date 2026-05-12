@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from 'express';
+import analyticsRoutes from './routes/analytics';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // --- ADDED ROUTES ---
+app.use('/api/analytics', analyticsRoutes);
 
 // 1. Root Route (This fixes the "Cannot GET /" error)
 app.get('/', (req: Request, res: Response) => {
