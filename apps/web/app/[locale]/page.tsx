@@ -26,7 +26,8 @@ export default function SahiDawaHome() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale;
-  const t = useTranslations('Index');
+  const tHome = useTranslations('Home');
+  const tNav = useTranslations('Navigation');
 
   const handleNavigation = (path: string) => {
     router.push(`/${locale}/${path}`);
@@ -52,13 +53,13 @@ export default function SahiDawaHome() {
           <div className="flex items-center gap-2 md:gap-4">
             <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-600" aria-label="Main navigation">
               <button className="hover:text-emerald-600 transition-colors">
-                {t('Navigation.how_it_works')}
+                {tNav('how_it_works')}
               </button>
               <button className="hover:text-emerald-600 transition-colors">
-                {t('Navigation.alerts')}
+                {tNav('alerts')}
               </button>
               <Link href="/map" className="hover:text-emerald-600 transition-colors">
-                {t('Navigation.pharmacy_map')}
+                {tNav('pharmacy_map')}
               </Link>
             </nav>
             <LanguageSwitcher />
@@ -77,10 +78,10 @@ export default function SahiDawaHome() {
             GSSoC 2026 Open Source Project
           </div>
           <h2 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 leading-[1.1]">
-            {t('Home.title')}
+            {tHome('title')}
           </h2>
           <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
-            {t('Home.subtitle')}
+            {tHome('subtitle')}
           </p>
         </div>
 
@@ -100,8 +101,8 @@ export default function SahiDawaHome() {
                 <Camera size={28} />
               </div>
               <div>
-                <h3 className="text-2xl font-black tracking-tight">{t('Home.scan_button')}</h3>
-                <p className="text-slate-400 font-medium mt-1">{t('Home.scan_subtitle')}</p>
+                <h3 className="text-2xl font-black tracking-tight">{tHome('scan_button')}</h3>
+                <p className="text-slate-400 font-medium mt-1">{tHome('scan_subtitle')}</p>
               </div>
               <div className="flex items-center gap-2 text-emerald-400 font-bold pt-2">
                 Launch Scanner <ChevronRight size={18} />
@@ -123,8 +124,8 @@ export default function SahiDawaHome() {
                 <Mic size={28} />
               </div>
               <div>
-                <h3 className="text-2xl font-black tracking-tight text-slate-800">{t('Home.voice_triage')}</h3>
-                <p className="text-slate-500 font-medium mt-1">{t('Home.voice_subtitle')}</p>
+                <h3 className="text-2xl font-black tracking-tight text-slate-800">{tHome('voice_triage')}</h3>
+                <p className="text-slate-500 font-medium mt-1">{tHome('voice_subtitle')}</p>
               </div>
               <div className="flex items-center gap-2 text-blue-600 font-bold pt-2">
                 Start Consultation <ChevronRight size={18} />
@@ -146,8 +147,8 @@ export default function SahiDawaHome() {
                 <MapPin size={28} />
               </div>
               <div>
-                <h3 className="text-2xl font-black tracking-tight text-slate-800">{t('Home.pharmacy_map')}</h3>
-                <p className="text-slate-500 font-medium mt-1">{t('Home.pharmacy_subtitle')}</p>
+                <h3 className="text-2xl font-black tracking-tight text-slate-800">{tHome('pharmacy_map')}</h3>
+                <p className="text-slate-500 font-medium mt-1">{tHome('pharmacy_subtitle')}</p>
               </div>
               <div className="flex items-center gap-2 text-amber-600 font-bold pt-2">
                 Open Map <ChevronRight size={18} />
@@ -162,12 +163,12 @@ export default function SahiDawaHome() {
             <Search className="text-slate-400 ml-2" size={24} />
             <input 
               type="text" 
-              placeholder={t('Home.search_placeholder')}
+              placeholder={tHome('search_placeholder')}
               className="w-full bg-transparent border-none outline-none px-4 py-3 text-slate-700 font-medium placeholder:text-slate-400"
               aria-label="Search medicine or batch"
             />
             <button className="bg-slate-900 text-white px-5 sm:px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-colors text-sm sm:text-base">
-              {t('Home.search_button')}
+              {tHome('search_button')}
             </button>
           </div>
         </div>

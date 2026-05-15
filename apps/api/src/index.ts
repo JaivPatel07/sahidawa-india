@@ -15,8 +15,8 @@ import verifyRouter from './routes/verify';
 import analyticsRoutes from './routes/analytics';
 import { supabase } from './db/client';
 
-import logger from './utils/logger.js';
-import { errorHandler } from './middleware/errorHandler.js';
+import logger from './utils/logger';
+import { errorHandler } from './middleware/errorHandler';
 
 const app: Express = express();
 const port = process.env.PORT || 4000;
