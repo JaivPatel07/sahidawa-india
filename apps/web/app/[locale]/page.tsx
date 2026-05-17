@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect, useState } from 'react';
 import {
   Camera,
   Mic,
@@ -19,15 +20,66 @@ import {
 import { Link } from "@/i18n/routing";
 import { useTranslations } from 'next-intl';
 import { useRouter, useParams } from "next/navigation";
+import { supabase } from '../../../api/src/db/client';
 import LanguageSwitcher from "./LanguageSwitcher";
 import Footer from "./components/Footer";
 
+function formatRelativeTime(dateString: string | null): string {
+  if (!dateString) return 'Recent';
+  
+  const now = new Date();
+  const past = new Date(dateString);
+  const msPerMinute = 60 * 1000;
+  const msPerHour = msPerMinute * 60;
+  const msPerDay = msPerHour * 24;
+  
+  const elapsed = now.getTime() - past.getTime();
+  
+  if (elapsed < msPerMinute) {
+    return 'Just now';
+  } else if (elapsed < msPerHour) {
+    return `${Math.round(elapsed / msPerMinute)}m ago`;
+  } else if (elapsed < msPerDay) {
+    return `${Math.round(elapsed / msPerHour)}h ago`;
+  } else {
+    // Fall back to a standard date view if it's older than 24 hours
+    return past.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+}
+
 export default function SahiDawaHome() {
+
   const router = useRouter();
   const params = useParams();
   const locale = params.locale;
   const tHome = useTranslations('Home');
   const tNav = useTranslations('Navigation');
+
+  const [homepageAlerts, setHomepageAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    async function fetchAlerts() {
+      try {
+        const { data, error } = await supabase
+          .from('medicines')
+          .select('*')
+          .or('is_counterfeit_alert.eq.true,cdsco_approval_status.eq.recalled,cdsco_approval_status.eq.banned, brand_name.eq.SYSTEM_UPDATE')
+          .order('created_at', { ascending: false })
+          .limit(4);
+
+        if (data) {
+          setHomepageAlerts(data);
+        }
+      } catch (err) {
+        console.error("Failed to query alerts matrix:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAlerts();
+  }, []);
 
   const handleNavigation = (path: string) => {
     router.push(`/${locale}/${path}`);
@@ -173,7 +225,7 @@ export default function SahiDawaHome() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12 mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 mb-20">
             {/* Live Alerts Panel */}
             <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col h-[400px]">
               <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -190,42 +242,58 @@ export default function SahiDawaHome() {
 
               <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
                 {/* Alert Item */}
-                <div className="bg-white border border-red-100 rounded-2xl p-4 shadow-sm flex items-start gap-4 relative overflow-hidden group hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500"></div>
-                  <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0 group-hover:bg-red-100 transition-colors">
-                    <AlertTriangle size={20} strokeWidth={2.5} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-bold text-slate-800 leading-tight">Augmentin 625 Duo</h4>
-                      <span className="text-[11px] font-medium text-slate-400">2h ago</span>
-                    </div>
-                    <p className="text-sm text-slate-500 mt-1 font-medium leading-snug">
-                      Batch No. <span className="font-bold text-slate-700">B23059</span> reported suspicious by 12 users.
-                    </p>
-                  </div>
-                </div>
+                 {homepageAlerts && homepageAlerts.length > 0 ? (
+                  homepageAlerts.map((alert) => (
+                    
+                    <div 
+                      key={alert.id} 
+                      className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex items-start gap-4 relative overflow-hidden group hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      {/* Left edge colored strip */}
+                      <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                        alert.brand_name === 'SYSTEM_UPDATE' 
+                          ? 'bg-blue-500' 
+                          : (alert.cdsco_approval_status === 'banned' || alert.is_counterfeit_alert) 
+                          ? 'bg-red-500' : 'bg-orange-400'        
+                        }`}>
+                        
+                        </div>
 
-                <div className="bg-white border border-orange-100 rounded-2xl p-4 shadow-sm flex items-start gap-4 relative overflow-hidden group hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-orange-400"></div>
-                  <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center shrink-0 group-hover:bg-orange-100 transition-colors">
-                    <AlertTriangle size={20} strokeWidth={2.5} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-bold text-slate-800 leading-tight">Pan 40</h4>
-                      <span className="text-[11px] font-medium text-slate-400">5h ago</span>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                        alert.brand_name === 'SYSTEM_UPDATE' 
+                          ? 'bg-blue-50 text-blue-500 group-hover:bg-blue-100' 
+                          : (alert.cdsco_approval_status === 'banned' || alert.is_counterfeit_alert) 
+                            ? 'bg-red-50 text-red-500 group-hover:bg-red-100' 
+                            : 'bg-orange-50 text-orange-500 group-hover:bg-orange-100'
+                      }`}>
+                        {alert.brand_name === 'SYSTEM_UPDATE' ? (
+                          <Globe size={20} strokeWidth={2.5} />
+                        ) : (
+                          <AlertTriangle size={20} strokeWidth={2.5} />
+                        )}
+                      </div>
+ 
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-bold text-slate-800 leading-tight">{alert.brand_name}</h4>
+                          <span className="text-[11px] font-medium text-slate-400">{formatRelativeTime(alert.created_at)}</span>
+                        </div>
+                        <p className="text-sm text-slate-500 mt-1 font-medium leading-snug">
+                          {alert.composition} Batch <span className="font-bold text-slate-700">{alert.batch_number}</span>
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-500 mt-1 font-medium leading-snug">
-                      Substandard quality detected in UP region. Batch <span className="font-bold text-slate-700">UP992</span>.
-                    </p>
-                  </div>
-                </div>
+                  ))
+                ) : (
+                  <p className="text-center text-sm text-slate-400 py-12">No current regulatory alerts recorded.</p>
+                )}
               </div>
               <div className="p-4 bg-white border-t border-slate-100">
-                <button className="w-full py-3 bg-slate-50 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-colors">
+                <Link href="/alerts" className="block w-full">
+                <button className="w-full py-3 bg-slate-50 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-colors cursor-pointer">
                   View Full Alert Log
                 </button>
+                </Link>
               </div>
             </div>
 
