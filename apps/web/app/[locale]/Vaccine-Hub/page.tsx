@@ -54,7 +54,7 @@ export default function VaccineHubPage() {
               setInitialDate(""); // Clear date tracking context when swapping vaccine targets
             }}
           >
-            <option value="">🔎 Choose a profile profile...</option>
+            <option value="">🔎 Choose a Vaccine Profile...</option>
             {(Object.keys(vaccineDatabase) as VaccineKey[]).map((key) => (
               <option key={key} value={key}>
                 {vaccineDatabase[key].disease_name}
