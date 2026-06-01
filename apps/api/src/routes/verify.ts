@@ -4,13 +4,17 @@ import { supabase } from "../db/client";
 import { verifyLimiter } from "../middleware/rateLimit";
 import { requireAuth } from "../middleware/auth";
 
-const ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://sahidawa.vercel.app",
-    "https://sahidawa-india.vercel.app",
-    "https://sahidawa.goswav.in",
-];
+const ALLOWED_ORIGINS = (
+    process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(",").map((s) => s.trim())
+        : [
+              "http://localhost:3000",
+              "http://localhost:5173",
+              "https://sahidawa.vercel.app",
+              "https://sahidawa-india.vercel.app",
+              "https://sahidawa.goswav.in",
+          ]
+);
 
 const router = Router();
 
@@ -18,7 +22,7 @@ function isAllowedOrigin(req: Request): boolean {
     const origin = req.headers.origin;
     const referer = req.headers.referer;
     const source = origin || (referer ? new URL(referer).origin : null);
-    if (!source) return false;
+    if (!source) return true; // Allow requests with no Origin/Referer header
     return ALLOWED_ORIGINS.includes(source);
 }
 
