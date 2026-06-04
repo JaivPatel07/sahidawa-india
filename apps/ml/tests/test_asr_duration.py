@@ -10,19 +10,15 @@ import pytest
 from fastapi import HTTPException
 
 if importlib.util.find_spec("noisereduce") is None:
-    nr_mock = types.ModuleType("noisereduce")
-    nr_mock.reduce_noise = lambda y, sr: y
-    sys.modules["noisereduce"] = nr_mock
+    sys.modules["noisereduce"] = types.SimpleNamespace(reduce_noise=lambda y, sr: y)
 
 if importlib.util.find_spec("faster_whisper") is None:
-    fw_mock = types.ModuleType("faster_whisper")
-    fw_mock.WhisperModel = object
-    sys.modules["faster_whisper"] = fw_mock
+    sys.modules["faster_whisper"] = types.SimpleNamespace(WhisperModel=object)
 
 if importlib.util.find_spec("soundfile") is None:
-    sf_mock = types.ModuleType("soundfile")
-    sf_mock.read = lambda _path: (_ for _ in ()).throw(RuntimeError("stubbed"))
-    sys.modules["soundfile"] = sf_mock
+    sys.modules["soundfile"] = types.SimpleNamespace(
+        read=lambda _path: (_ for _ in ()).throw(RuntimeError("stubbed"))
+    )
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
