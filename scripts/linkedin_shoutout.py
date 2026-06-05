@@ -124,7 +124,8 @@ def validate_linkedin_url(pr: dict) -> str:
             comment = (
                 f"🎉 Awesome work on getting your `{pr.get('labels', 'advanced')}` PR merged! "
                 f"We wanted to give you a LinkedIn shoutout, but couldn't find your LinkedIn Profile URL in the PR description.\n\n"
-                f"If you'd like a shoutout, please edit the PR description to include your LinkedIn URL (e.g. `https://linkedin.com/in/username`) and we will feature you!"
+                f"If you'd like a shoutout, please edit the PR description to include your LinkedIn URL (e.g. `https://linkedin.com/in/username`). "
+                f"Once you've done that, please ping a maintainer to re-trigger the shoutout!"
             )
             os.system(f'gh pr comment {pr_number} --body "{comment}"')
             

@@ -37,8 +37,3 @@
 
 - [ ] My PR has a linked issue (`Closes #123`)
 - [ ] I have pulled the latest `main` and resolved any conflicts
-
-## 🌟 Get a LinkedIn Shoutout!
-
-If you want to be featured on our official LinkedIn page for this contribution, please provide your LinkedIn Profile URL:
-**LinkedIn Profile URL:** `https://linkedin.com/in/your-username` (Leave empty if not interested)
