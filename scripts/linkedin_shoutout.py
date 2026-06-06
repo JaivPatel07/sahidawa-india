@@ -396,7 +396,9 @@ def send_to_make_webhook(post_text: str, pr: dict) -> None:
         clean_avatar = pr['author_avatar'].split('?')[0]
         cards_url += f"&image={urllib.parse.quote(clean_avatar, safe='')}"
         
-    image_url = f"https://i.microlink.io/{urllib.parse.quote(cards_url, safe='')}"
+    # Use api.microlink.io with query parameters instead of i.microlink.io (path parameters)
+    # Make.com's URL parser breaks (ENOTFOUND) if the path contains 'https%3A' 
+    image_url = f"https://api.microlink.io/?url={urllib.parse.quote(cards_url, safe='')}&screenshot=true&meta=false&embed=screenshot.url"
     
     payload = {
         "post_text": post_text,
