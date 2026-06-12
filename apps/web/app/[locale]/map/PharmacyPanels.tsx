@@ -123,10 +123,7 @@ export function calculateTrustBreakdown(pharmacy: Pharmacy): TrustBreakdown {
         isVerified: false,
         isGovt: false,
         isCommunity: true,
-        riskLevel: "unverified",
-        riskLabel: "Unverified Source",
-        riskIndicator: "⚠️",
-        riskTextColor: "text-amber-600 dark:text-amber-400",
+        ...getRiskInfo(communityScore),
     };
 }
 
@@ -296,12 +293,23 @@ function PharmacyPanelRow({
                                 <span className="text-[8px] leading-none font-bold tracking-wide text-(--color-text-secondary)/80 uppercase">
                                     {breakdown.labelText}
                                 </span>
-                                <span
-                                    className={`mt-0.5 flex items-center gap-0.5 text-[8px] leading-none font-bold ${breakdown.riskTextColor}`}
-                                >
-                                    <span>{breakdown.riskIndicator}</span>
-                                    <span>{breakdown.riskLabel}</span>
-                                </span>
+                                {(() => {
+                                    let badgeBg = "bg-emerald-50 dark:bg-emerald-950/20";
+                                    if (breakdown.riskLevel === "high") {
+                                        badgeBg = "bg-rose-50 dark:bg-rose-950/20";
+                                    } else if (breakdown.riskLevel === "medium") {
+                                        badgeBg = "bg-amber-50 dark:bg-amber-950/20";
+                                    }
+
+                                    return (
+                                        <span
+                                            className={`mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[8px] leading-none font-bold ${badgeBg} ${breakdown.riskTextColor}`}
+                                        >
+                                            <span>{breakdown.riskIndicator}</span>
+                                            <span>{breakdown.riskLabel}</span>
+                                        </span>
+                                    );
+                                })()}
                             </div>
                         </div>
 
@@ -359,8 +367,18 @@ function PharmacyPanelRow({
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between font-bold text-(--color-text-primary)">
                                     <span>Trust Score</span>
-                                    <span className="font-bold text-amber-600 dark:text-amber-400">
+                                    <span className={`font-bold ${breakdown.riskTextColor}`}>
                                         {breakdown.score}%
+                                    </span>
+                                </div>
+
+                                <div className="mt-1 flex items-center justify-between text-[10px] font-semibold text-(--color-text-secondary)">
+                                    <span>Risk Level</span>
+                                    <span
+                                        className={`flex items-center gap-1 ${breakdown.riskTextColor}`}
+                                    >
+                                        <span>{breakdown.riskIndicator}</span>
+                                        <span>{breakdown.riskLabel}</span>
                                     </span>
                                 </div>
 
