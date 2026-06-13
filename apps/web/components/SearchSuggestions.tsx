@@ -20,6 +20,8 @@ export interface SearchSuggestionsProps {
     noResults?: boolean;
     /** Called when the user clicks "Retry" after an error */
     onRetry?: () => void;
+    /** The current search query, used to highlight matching substrings */
+    query?: string;
 }
 
 /**
@@ -44,7 +46,33 @@ export default function SearchSuggestions({
     error = null,
     noResults = false,
     onRetry,
+    query = "",
 }: SearchSuggestionsProps) {
+    /**
+     * Splits `text` into parts around the first case-insensitive match of `query`
+     * and wraps the matched portion in <strong> for highlighting.
+     */
+    function highlightMatch(text: string, query: string) {
+        if (!query) return text;
+        const lowerText = text.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        const matchIndex = lowerText.indexOf(lowerQuery);
+        if (matchIndex === -1) return text;
+
+        const before = text.slice(0, matchIndex);
+        const match = text.slice(matchIndex, matchIndex + query.length);
+        const after = text.slice(matchIndex + query.length);
+
+        return (
+            <>
+                {before}
+                <strong className="font-bold text-emerald-600 dark:text-emerald-400">
+                    {match}
+                </strong>
+                {after}
+            </>
+        );
+    }
     if (!visible && !isLoading && !error && !noResults) {
         return null;
     }
@@ -120,8 +148,7 @@ export default function SearchSuggestions({
                             className={`shrink-0 ${isActive ? "text-emerald-500" : "text-slate-400"}`}
                             aria-hidden="true"
                         />
-                        {/* Preserve exact string; parent can highlight matched portion if needed */}
-                        <span className="truncate">{suggestion}</span>
+                        <span className="truncate">{highlightMatch(suggestion, query)}</span>
                     </li>
                 );
             })}
