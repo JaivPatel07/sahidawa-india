@@ -1,6 +1,7 @@
-import { Router, Request, Response } from "express";
+import { Router, Response } from "express";
 import { z } from "zod";
 import { getMlServiceUrl, MISSING_ML_SERVICE_URL_MESSAGE } from "../config/mlService";
+import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import logger from "../utils/logger";
 
 const router = Router();
@@ -18,7 +19,7 @@ const analyzeResponseSchema = z.object({
 
 const ML_ANALYSIS_TIMEOUT_MS = 8000;
 
-router.post("/analyze", async (req: Request, res: Response) => {
+router.post("/analyze", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     const parsed = analyzeRequestSchema.safeParse(req.body);
 
     if (!parsed.success) {

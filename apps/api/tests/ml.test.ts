@@ -3,12 +3,26 @@ import express from "express";
 import request from "supertest";
 import mlRouter from "../src/routes/ml";
 
+jest.mock("../src/middleware/auth", () => ({
+    requireAuth: (req: any, res: any, next: any) => {
+        const token = req.headers.authorization?.slice(7);
+        if (!token) {
+            return res.status(401).json({ error: "Unauthorized: Missing access token" });
+        }
+        req.user = { id: "test-user-id", email: "test@example.com", role: "user" };
+        next();
+    },
+    AuthenticatedRequest: Object,
+}));
+
 function buildApp() {
     const app = express();
     app.use(express.json());
     app.use("/api/ml", mlRouter);
     return app;
 }
+
+const VALID_TOKEN = "Bearer test-auth-token";
 
 describe("ml routes", () => {
     const originalFetch = global.fetch;
@@ -23,9 +37,19 @@ describe("ml routes", () => {
         process.env.ML_SERVICE_URL = originalMlServiceUrl;
     });
 
+    it("rejects unauthenticated requests", async () => {
+        const response = await request(buildApp())
+            .post("/api/ml/analyze")
+            .send({ imageUrl: "https://res.cloudinary.com/demo/image/upload/medicine.jpg" });
+
+        assert.equal(response.status, 401);
+        assert.ok(response.body.error.includes("Unauthorized"));
+    });
+
     it("rejects non-HTTPS image URLs", async () => {
         const response = await request(buildApp())
             .post("/api/ml/analyze")
+            .set("Authorization", VALID_TOKEN)
             .send({ imageUrl: "http://example.test/photo.jpg" });
 
         assert.equal(response.status, 400);
@@ -45,6 +69,7 @@ describe("ml routes", () => {
 
         const response = await request(buildApp())
             .post("/api/ml/analyze")
+            .set("Authorization", VALID_TOKEN)
             .send({ imageUrl: "https://res.cloudinary.com/demo/image/upload/medicine.jpg" });
 
         assert.equal(response.status, 200);
@@ -60,6 +85,7 @@ describe("ml routes", () => {
 
         const response = await request(buildApp())
             .post("/api/ml/analyze")
+            .set("Authorization", VALID_TOKEN)
             .send({ imageUrl: "https://res.cloudinary.com/demo/image/upload/medicine.jpg" });
 
         assert.equal(response.status, 500);
