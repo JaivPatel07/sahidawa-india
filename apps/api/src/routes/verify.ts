@@ -326,6 +326,7 @@ router.post(
                 verified: true,
                 batch_status,
                 medicine: {
+                    id: data.id,
                     brand_name: data.brand_name,
                     generic_name: data.generic_name,
                     manufacturer: data.manufacturer,

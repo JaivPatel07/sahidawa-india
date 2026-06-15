@@ -39,6 +39,7 @@ const CHILD_NAME_MAX_LENGTH = 80;
 const VALID_DOSE_IDS = new Set(NATIONAL_IMMUNIZATION_SCHEDULE.map((item) => item.id));
 const TRACKER_STORAGE_KEY = "vaccine-hub-child-tracker-v1";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type SyncContext =
     | { status: "loading" }
     | { status: "local" }
