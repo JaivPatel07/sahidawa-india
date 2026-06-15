@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
     History,
     HelpCircle,
-    Home,
     User,
     MapPin,
     Bell,
@@ -13,16 +12,20 @@ import {
     Menu,
     X,
     LogIn,
+    LogOut,
     Camera,
     Clock,
     ShieldCheck,
     Calculator,
+    ChevronDown,
+    Settings,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import LanguageSwitcher from "../LanguageSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
 import type { FC } from "react";
+import { useSession } from "@/src/components/AuthProvider";
 
 const desktopNavLinkClassName =
     "relative inline-flex items-center pb-1 transition-colors duration-200 ease-out hover:text-emerald-600 focus-visible:text-emerald-600 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-current after:transition-transform after:duration-300 after:ease-out hover:after:scale-x-100 focus-visible:after:scale-x-100 motion-safe:after:will-change-transform";
@@ -43,14 +46,6 @@ type NavItem = {
 };
 
 const MOBILE_NAV_ITEMS: NavItem[] = [
-    {
-        href: "/",
-        labelKey: "home",
-        icon: Home,
-        activeColor: "text-emerald-500",
-        hoverColor: "hover:text-emerald-500",
-        strokeWidth: 2.5,
-    },
     {
         href: "/scan",
         labelKey: "scans",
@@ -90,20 +85,24 @@ export default function Navbar() {
     const pathname = usePathname();
     const tHome = useTranslations("Home");
     const tNav = useTranslations("Navigation");
+    const { session, isLoading: authLoading } = useSession();
 
     // UI States
     const [isNavVisible, setIsNavVisible] = useState(true);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     const lastScrollY = useRef(0);
     const ticking = useRef(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const profileRef = useRef<HTMLDivElement>(null);
 
-    // Close hamburger menu when clicking outside
+    // Close menus when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Element;
             const isOutsideMenu = menuRef.current && !menuRef.current.contains(target);
+            const isOutsideProfile = profileRef.current && !profileRef.current.contains(target);
             const isInsideDropdown =
                 target.closest("[data-radix-popper-content]") ||
                 target.closest('[role="menu"]') ||
@@ -113,12 +112,15 @@ export default function Navbar() {
             if (isOutsideMenu && !isInsideDropdown) {
                 setIsMenuOpen(false);
             }
+            if (isOutsideProfile && !isInsideDropdown) {
+                setIsProfileOpen(false);
+            }
         };
-        if (isMenuOpen) {
+        if (isMenuOpen || isProfileOpen) {
             document.addEventListener("mousedown", handleClickOutside);
         }
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isMenuOpen]);
+    }, [isMenuOpen, isProfileOpen]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -186,14 +188,6 @@ export default function Navbar() {
                         aria-label="Main navigation"
                     >
                         <Link
-                            href="/"
-                            className={desktopLinkClass("/")}
-                            aria-current={isActive("/") ? "page" : undefined}
-                        >
-                            <Home size={14} className="mr-1 inline" />
-                            {tNav("home")}
-                        </Link>
-                        <Link
                             href="/how-it-works"
                             className={desktopLinkClass("/how-it-works")}
                             aria-current={isActive("/how-it-works") ? "page" : undefined}
@@ -227,20 +221,6 @@ export default function Navbar() {
                         >
                             <ShieldCheck size={14} /> {tNav("scheme_eligibility")}
                         </Link>
-                        <Link
-                            href="/schedule"
-                            className={`${desktopLinkClass("/schedule")} flex items-center gap-1`}
-                            aria-current={isActive("/schedule") ? "page" : undefined}
-                        >
-                            <Clock size={14} /> {tNav("schedule")}
-                        </Link>
-                        <Link
-                            href="/reports/me"
-                            className={`${desktopLinkClass("/reports/me")} flex items-center gap-1`}
-                            aria-current={isActive("/reports/me") ? "page" : undefined}
-                        >
-                            <History size={14} /> {tNav("my_reports")}
-                        </Link>
                     </nav>
 
                     {/* Right — Action Controls Container */}
@@ -265,15 +245,97 @@ export default function Navbar() {
                             <ThemeToggle />
                         </div>
 
-                        {/* Desktop Only Account Sign In */}
-                        <Link
-                            href="/login"
-                            className="hidden h-9 items-center justify-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-50/50 px-4 py-1.5 text-sm font-bold text-emerald-700 transition-all duration-200 hover:scale-105 hover:border-emerald-500/50 hover:bg-emerald-100 sm:flex sm:h-10 sm:px-5 sm:py-2 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
-                            aria-label={tHome("sign_in")}
-                        >
-                            <User size={16} />
-                            <span>{tHome("sign_in")}</span>
-                        </Link>
+                        {/* Desktop Only Account Sign In / Profile */}
+                        {authLoading ? (
+                            <div className="hidden h-9 w-24 animate-pulse rounded-full bg-slate-200 sm:block sm:h-10 dark:bg-slate-800" />
+                        ) : session ? (
+                            <div className="relative hidden sm:block" ref={profileRef}>
+                                <button
+                                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                    className="flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 sm:h-10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                                >
+                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
+                                        <User size={14} />
+                                    </div>
+                                    <span className="max-w-[100px] truncate">
+                                        {session.user?.user_metadata?.full_name ||
+                                            session.user?.email?.split("@")[0] ||
+                                            "Profile"}
+                                    </span>
+                                    <ChevronDown size={14} className="text-slate-400" />
+                                </button>
+
+                                {/* Profile Dropdown Menu */}
+                                {isProfileOpen && (
+                                    <div className="animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-[100] mt-2 w-56 origin-top-right rounded-xl border border-slate-200 bg-white p-2 shadow-xl duration-150 dark:border-slate-800 dark:bg-slate-950">
+                                        <div className="mb-2 border-b border-slate-100 px-2 pt-1 pb-2 dark:border-slate-900">
+                                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                {session.user?.user_metadata?.full_name ||
+                                                    "Signed-in User"}
+                                            </p>
+                                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                                {session.user?.email}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <Link
+                                                href="/profile"
+                                                onClick={() => setIsProfileOpen(false)}
+                                                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                            >
+                                                <User size={16} />
+                                                Profile Dashboard
+                                            </Link>
+                                            <Link
+                                                href="/reports/me"
+                                                onClick={() => setIsProfileOpen(false)}
+                                                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                            >
+                                                <History size={16} />
+                                                {tNav("my_reports")}
+                                            </Link>
+                                            <Link
+                                                href="/schedule"
+                                                onClick={() => setIsProfileOpen(false)}
+                                                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                            >
+                                                <Clock size={16} />
+                                                {tNav("schedule")}
+                                            </Link>
+                                            <Link
+                                                href="/settings"
+                                                onClick={() => setIsProfileOpen(false)}
+                                                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                            >
+                                                <Settings size={16} />
+                                                Settings
+                                            </Link>
+                                            <div className="my-1 border-t border-slate-100 dark:border-slate-900" />
+                                            <button
+                                                onClick={() => {
+                                                    setIsProfileOpen(false);
+                                                    localStorage.removeItem("sb-access-token");
+                                                    window.location.href = "/";
+                                                }}
+                                                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                                            >
+                                                <LogOut size={16} />
+                                                Sign Out
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <Link
+                                href="/login"
+                                className="hidden h-9 items-center justify-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-50/50 px-4 py-1.5 text-sm font-bold text-emerald-700 transition-all duration-200 hover:scale-105 hover:border-emerald-500/50 hover:bg-emerald-100 sm:flex sm:h-10 sm:px-5 sm:py-2 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
+                                aria-label={tHome("sign_in")}
+                            >
+                                <LogIn size={16} />
+                                <span>{tHome("sign_in")}</span>
+                            </Link>
+                        )}
 
                         {/* Mobile Only: Hamburger Toggle Menu Button */}
                         <div className="relative sm:hidden" ref={menuRef}>
@@ -348,41 +410,67 @@ export default function Navbar() {
                                                 <ShieldCheck size={14} />
                                                 {tNav("scheme_eligibility")}
                                             </Link>
-                                            <Link
-                                                href="/reports/me"
-                                                onClick={() => setIsMenuOpen(false)}
-                                                className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors ${
-                                                    isActive("/reports/me")
-                                                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                                                        : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                                                }`}
-                                            >
-                                                <History size={14} /> {tNav("my_reports")}
-                                            </Link>
-                                            <Link
-                                                href="/schedule"
-                                                onClick={() => setIsMenuOpen(false)}
-                                                className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors ${
-                                                    isActive("/schedule")
-                                                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                                                        : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                                                }`}
-                                            >
-                                                <Clock size={14} /> {tNav("schedule")}
-                                            </Link>
                                         </div>
 
                                         <div className="my-1 border-t border-slate-100 dark:border-slate-900" />
 
-                                        {/* Added Sign In / Sign Up Option */}
-                                        <Link
-                                            href="/login"
-                                            onClick={() => setIsMenuOpen(false)}
-                                            className="flex w-full items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-2 text-left text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/70"
-                                        >
-                                            <LogIn size={16} />
-                                            <span>{tHome("sign_in")}</span>
-                                        </Link>
+                                        {/* Authenticated Links or Sign In */}
+                                        {session ? (
+                                            <div className="flex flex-col gap-1">
+                                                <Link
+                                                    href="/profile"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                    className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors ${
+                                                        isActive("/profile")
+                                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                    }`}
+                                                >
+                                                    <User size={14} /> Profile
+                                                </Link>
+                                                <Link
+                                                    href="/reports/me"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                    className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors ${
+                                                        isActive("/reports/me")
+                                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                    }`}
+                                                >
+                                                    <History size={14} /> {tNav("my_reports")}
+                                                </Link>
+                                                <Link
+                                                    href="/schedule"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                    className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors ${
+                                                        isActive("/schedule")
+                                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                    }`}
+                                                >
+                                                    <Clock size={14} /> {tNav("schedule")}
+                                                </Link>
+                                                <button
+                                                    onClick={() => {
+                                                        setIsMenuOpen(false);
+                                                        localStorage.removeItem("sb-access-token");
+                                                        window.location.href = "/";
+                                                    }}
+                                                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                                                >
+                                                    <LogOut size={14} /> Sign Out
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <Link
+                                                href="/login"
+                                                onClick={() => setIsMenuOpen(false)}
+                                                className="flex w-full items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-2 text-left text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/70"
+                                            >
+                                                <LogIn size={16} />
+                                                <span>{tHome("sign_in")}</span>
+                                            </Link>
+                                        )}
 
                                         <div className="my-0.5 border-t border-slate-100 dark:border-slate-900" />
 
