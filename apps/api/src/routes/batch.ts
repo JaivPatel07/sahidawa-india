@@ -17,6 +17,7 @@ function getExpiryStatus(expiryDate: string | null): "green" | "yellow" | "red" 
     if (!expiryDate) return "unknown";
     const now = new Date();
     const expiry = new Date(expiryDate);
+    if (isNaN(expiry.getTime())) return "unknown";
     const diffMs = expiry.getTime() - now.getTime();
     const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
 
